@@ -1,6 +1,6 @@
 # NanoBanana Studio
 
-A modern, AI-powered image editor alternative to Photoshop/Photopea, powered by Google's nanobanana API from fal.ai.
+A modern, AI-powered image editor alternative to Photoshop/Photopea, powered by Google's nanobanana API from [fal.ai](https://fal.ai/dashboard).
 
 ![NanoBanana Studio Screenshot](./screenshot.png)
 
@@ -15,7 +15,7 @@ A modern, AI-powered image editor alternative to Photoshop/Photopea, powered by 
 ## Prerequisites
 
 - Node.js 18+ and npm
-- A fal.ai API key ([Get one here](https://fal.ai))
+- A fal.ai API key ([Get one here](https://fal.ai/dashboard/keys))
 
 ## Installation
 
