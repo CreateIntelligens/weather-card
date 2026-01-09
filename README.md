@@ -43,6 +43,48 @@ PORT=3001
 
 ## Running the Application
 
+### Option 1: Docker (Recommended)
+
+The easiest way to run the application is using Docker:
+
+1. Make sure you have Docker and Docker Compose installed
+2. Create a `.env` file in the `backend` directory with your fal.ai API key:
+
+```bash
+cd backend
+cp env.example .env
+# Edit .env and add your FAL_API_KEY
+```
+
+3. Start the application:
+
+```bash
+docker-compose up
+```
+
+Or run in detached mode:
+
+```bash
+docker-compose up -d
+```
+
+4. Access the application at http://localhost:8909
+   - All traffic (frontend and backend API) is unified through Nginx reverse proxy
+
+5. Stop the application:
+
+```bash
+docker-compose down
+```
+
+To rebuild after code changes:
+
+```bash
+docker-compose up --build
+```
+
+### Option 2: Local Development
+
 Start both frontend and backend in development mode:
 
 ```bash

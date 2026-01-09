@@ -1,0 +1,45 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nanobanana-backend
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    restart: unless-stopped
+    networks:
+      - nanobanana-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: nanobanana-frontend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/dist
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - nanobanana-network
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: nanobanana-nginx
+    ports:
+      - "8909:8909"
+    depends_on:
+      - frontend
+      - backend
+    restart: unless-stopped
+    networks:
+      - nanobanana-network
+
+networks:
+  nanobanana-network:
+    driver: bridge
