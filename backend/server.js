@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { existsSync } from 'fs';
 import { Buffer } from 'buffer';
+import { getWeatherReasoningPrompt, getWeatherImagePrompt } from './prompts.js';
 
 dotenv.config();
 
@@ -15,6 +16,11 @@ const __dirname = dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Middleware
+app.use(cors());
+app.use(express.json({ limit: '50mb' }));
+
 const GOOGLE_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash-image';
 
@@ -27,7 +33,12 @@ if (GOOGLE_API_KEY) {
 // Constants
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
-const API_TIMEOUT = 120000; // 120 seconds
+
+// Initialize multer for file uploads
+const upload = multer({
+  limits: { fileSize: MAX_FILE_SIZE },
+});
+
 // Utility function to call Google Gemini API
 async function callGeminiAPI(inputPayload) {
   if (!GOOGLE_API_KEY) {
@@ -77,11 +88,17 @@ async function callGeminiAPI(inputPayload) {
   }
 }
 
-// Validate and parse integer parameters
-function parseIntParam(value, defaultValue = undefined) {
-  if (!value) return defaultValue;
-  const parsed = parseInt(value, 10);
-  return isNaN(parsed) ? defaultValue : parsed;
+// Unified error handler
+function sendErrorResponse(res, error, defaultStatus = 400) {
+  console.error('[ERROR]', error.message);
+
+  const statusCode = error.message.includes('timeout') ? 504 :
+    error.message.includes('not configured') ? 500 : defaultStatus;
+
+  res.status(statusCode).json({
+    error: error.message,
+    timestamp: new Date().toISOString()
+  });
 }
 
 // Health check
@@ -103,7 +120,7 @@ app.post('/api/edit-image', upload.single('image'), async (req, res) => {
     }
 
     // Validate prompt
-    const { prompt, negativePrompt, seed, numInferenceSteps, model } = req.body;
+    const { prompt } = req.body;
     if (!prompt || !prompt.trim()) {
       return res.status(400).json({ error: 'Prompt is required' });
     }
@@ -130,15 +147,7 @@ app.post('/api/edit-image', upload.single('image'), async (req, res) => {
     console.log('[EDIT] Successfully processed image');
     res.json(data);
   } catch (error) {
-    console.error('[EDIT] Error processing image:', error.message);
-
-    const statusCode = error.message.includes('timeout') ? 504 :
-      error.message.includes('not configured') ? 500 : 400;
-
-    res.status(statusCode).json({
-      error: error.message,
-      timestamp: new Date().toISOString()
-    });
+    sendErrorResponse(res, error);
   }
 });
 
@@ -180,15 +189,67 @@ app.post('/api/generate-image', async (req, res) => {
       }],
     });
   } catch (error) {
-    console.error('[GENERATE] Error generating image:', error.message);
+    sendErrorResponse(res, error);
+  }
+});
 
-    const statusCode = error.message.includes('timeout') ? 504 :
-      error.message.includes('not configured') ? 500 : 400;
+// Generate weather card
+app.post('/api/generate-weather-card', async (req, res) => {
+  try {
+    const { city, aspectRatio, language } = req.body;
+    if (!city) return res.status(400).json({ error: 'City name is required' });
 
-    res.status(statusCode).json({
-      error: error.message,
-      timestamp: new Date().toISOString()
+    console.log(`[WEATHER] Processing weather card for city: "${city}", aspect: ${aspectRatio || 'default'}, lang: ${language || 'auto'}`);
+
+    // Step 1: Get Weather & Localization Data via Text Model
+    const currentUtcTime = new Date().toISOString();
+    const textModelName = process.env.GEMINI_TEXT_MODEL || 'gemini-2.0-flash';
+
+    // Get reasoning prompt from module
+    const textPrompt = getWeatherReasoningPrompt(city, currentUtcTime, language);
+
+    const textModel = genAI.getGenerativeModel({ model: textModelName });
+    const textResponse = await textModel.generateContent(textPrompt);
+    const textResult = textResponse.response.text();
+
+    // Parse JSON
+    const jsonStr = textResult.replace(/```json/g, '').replace(/```/g, '').trim();
+    let weatherData;
+    try {
+      weatherData = JSON.parse(jsonStr);
+    } catch (e) {
+      console.error("Failed to parse weather JSON:", jsonStr);
+      throw new Error("Failed to retrieve weather data");
+    }
+
+    console.log(`[WEATHER] Data retrieved:`, weatherData);
+
+    // Step 2: Construct Image Prompt
+    // Get image prompt from module
+    const imagePrompt = getWeatherImagePrompt(weatherData, aspectRatio, language);
+
+    console.log(`[WEATHER] Generating image with prompt...`);
+
+    // Step 3: Generate Image
+    const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
+    const imageResponse = await model.generateContent(imagePrompt);
+    const generatedImage = imageResponse.response.candidates[0]?.content?.parts[0]?.inlineData?.data;
+
+    if (!generatedImage) {
+      throw new Error('No image generated from Gemini API');
+    }
+
+    console.log('[WEATHER] Successfully generated image');
+
+    res.json({
+      images: [{
+        url: `data:image/jpeg;base64,${generatedImage}`,
+      }],
+      weatherData
     });
+
+  } catch (error) {
+    sendErrorResponse(res, error);
   }
 });
 
@@ -210,6 +271,7 @@ app.use((err, req, res, next) => {
 });
 
 // Serve frontend in production only (must be last)
+const distPath = join(__dirname, '../frontend/dist');
 if (existsSync(distPath)) {
   app.get('*', (req, res) => {
     res.sendFile(join(__dirname, '../frontend/dist/index.html'));

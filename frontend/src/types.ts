@@ -9,7 +9,7 @@ export interface ApiError {
   timestamp?: string;
 }
 
-export type Mode = 'edit' | 'generate';
+export type Mode = 'edit' | 'generate' | 'weather';
 
 export interface EditImageParams {
   image: Blob;
@@ -17,15 +17,7 @@ export interface EditImageParams {
   negativePrompt?: string;
 }
 
-export interface InpaintImageParams {
-  image: Blob | string;
-  mask: Blob | string;
-  prompt: string;
-}
-
 export interface GenerateImageParams {
   prompt: string;
   negativePrompt?: string;
-  width?: number;
-  height?: number;
 }

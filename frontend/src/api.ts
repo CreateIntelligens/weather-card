@@ -1,4 +1,4 @@
-import { EditResponse, EditImageParams, GenerateImageParams, InpaintImageParams } from './types';
+import { EditResponse, EditImageParams, GenerateImageParams } from './types';
 
 const API_BASE = '/api';
 
@@ -27,31 +27,6 @@ export async function editImage(params: EditImageParams): Promise<EditResponse> 
   return handleApiResponse<EditResponse>(response);
 }
 
-export async function inpaintImage(params: InpaintImageParams): Promise<EditResponse> {
-  const formData = new FormData();
-  
-  if (typeof params.image === 'string') {
-    formData.append('imageUrl', params.image);
-  } else {
-    formData.append('image', params.image, 'image.png');
-  }
-
-  if (typeof params.mask === 'string') {
-    formData.append('maskUrl', params.mask);
-  } else {
-    formData.append('mask', params.mask, 'mask.png');
-  }
-
-  formData.append('prompt', params.prompt);
-
-  const response = await fetch(`${API_BASE}/inpaint-image`, {
-    method: 'POST',
-    body: formData,
-  });
-
-  return handleApiResponse<EditResponse>(response);
-}
-
 export async function generateImage(params: GenerateImageParams): Promise<EditResponse> {
   const response = await fetch(`${API_BASE}/generate-image`, {
     method: 'POST',
@@ -69,16 +44,16 @@ export async function generateImage(params: GenerateImageParams): Promise<EditRe
   return handleApiResponse<EditResponse>(response);
 }
 
-export async function segmentImage(image: Blob): Promise<any> {
-  const formData = new FormData();
-  formData.append('image', image, 'image.png');
-
-  const response = await fetch(`${API_BASE}/segment-image`, {
+export async function generateWeatherCard(city: string, aspectRatio?: string, language?: string): Promise<EditResponse> {
+  const response = await fetch(`${API_BASE}/generate-weather-card`, {
     method: 'POST',
-    body: formData,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ city, aspectRatio, language }),
   });
 
-  return handleApiResponse<any>(response);
+  return handleApiResponse<EditResponse>(response);
 }
 
 export async function checkHealth(): Promise<{ status: string; apiConfigured: boolean }> {
