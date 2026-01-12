@@ -355,10 +355,11 @@
   background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
   background-size: 20px 20px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   padding: 40px;
   position: relative;
+  overflow: auto;
 }
 
 .canvas-area.pro {
@@ -419,9 +420,10 @@
 
 .result-image {
   max-width: 100%;
-  max-height: calc(100vh - 200px);
+  height: auto;
   border-radius: 4px;
   border: 2px solid #000000;
+  display: block;
 }
 
 .image-container.cropping {

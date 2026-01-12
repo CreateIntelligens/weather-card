@@ -12,7 +12,6 @@ import {
   Settings2,
   MousePointer2,
   Crop,
-  Plus,
   Eye,
   EyeOff,
   Eraser,
@@ -78,17 +77,14 @@ function App() {
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [aiLayerCount, setAiLayerCount] = useState(0);
-  const [adjustmentCount, setAdjustmentCount] = useState(1);
   const [aspect, setAspect] = useState<number | undefined>(3 / 2);
   const [isSegmenting, setIsSegmenting] = useState(false);
-  const [model, setModel] = useState<ModelId>('nano');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const menuItems = ['Export', 'Help'];
   const toolset = [
-    { id: 'select', label: 'Select', icon: MousePointer2 },
+    // Select and Filters removed - not supported by Gemini API
     { id: 'crop', label: 'Crop', icon: Crop },
-    { id: 'filters', label: 'Filters', icon: Sparkles },
     { id: 'magic', label: 'Magic', icon: Wand2 },
   ];
   const presetPrompts = [
@@ -231,18 +227,6 @@ function App() {
       icon: SparklesIcon,
     },
   ];
-  const modelOptions: Array<{ id: ModelId; label: string; description: string }> = [
-    {
-      id: 'nano',
-      label: 'Nano Banana',
-      description: 'Fast & lightweight',
-    },
-    {
-      id: 'pro',
-      label: 'Nano Banana Pro',
-      description: 'SOTA fidelity',
-    },
-  ];
   const aspectPresets = [
     { label: 'Free', ratio: undefined },
     { label: '1:1', ratio: 1 },
@@ -251,19 +235,19 @@ function App() {
     { label: '16:9', ratio: 16 / 9 },
   ];
 
-const registerLayer = useCallback(
-  (
-    layerData: Omit<Layer, 'id' | 'timestamp'>,
-    options?: { replaceKind?: LayerKind; autoSelect?: boolean },
-  ) => {
+  const registerLayer = useCallback(
+    (
+      layerData: Omit<Layer, 'id' | 'timestamp'>,
+      options?: { replaceKind?: LayerKind; autoSelect?: boolean },
+    ) => {
       const layer: Layer = {
         id: `layer-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
         timestamp: new Date().toLocaleTimeString(),
         ...layerData,
-      visible: layerData.visible ?? true,
+        visible: layerData.visible ?? true,
       };
 
-    setLayers((prev) => {
+      setLayers((prev) => {
         let base = prev;
         if (options?.replaceKind) {
           base = prev.filter((entry) => entry.kind !== options.replaceKind);
@@ -271,9 +255,9 @@ const registerLayer = useCallback(
         return [layer, ...base];
       });
 
-    if (options?.autoSelect !== false) {
-      setSelectedLayerId(layer.id);
-    }
+      if (options?.autoSelect !== false) {
+        setSelectedLayerId(layer.id);
+      }
       return layer;
     },
     [],
@@ -307,10 +291,10 @@ const registerLayer = useCallback(
 
     canvas.width = width;
     canvas.height = height;
-    
+
     // Clear canvas to transparent
     ctx.clearRect(0, 0, width, height);
-    
+
     // First, check what the mask looks like
     const maskCanvas = document.createElement('canvas');
     const maskCtx = maskCanvas.getContext('2d');
@@ -344,10 +328,10 @@ const registerLayer = useCallback(
       //   percentOpaque: (opaquePixels / (maskData.data.length / 4) * 100).toFixed(1) + '%'
       // });
     }
-    
+
     // Draw the base image
     ctx.drawImage(baseImage, 0, 0, width, height);
-    
+
     // Create a temporary canvas for the mask to analyze it
     const tempCanvas = document.createElement('canvas');
     const tempCtx = tempCanvas.getContext('2d');
@@ -358,28 +342,28 @@ const registerLayer = useCallback(
     tempCanvas.height = height;
     tempCtx.drawImage(maskImage, 0, 0, width, height);
     const maskData = tempCtx.getImageData(0, 0, width, height);
-    
+
     // Get the base image data
     const imageData = ctx.getImageData(0, 0, width, height);
-    
+
     // Apply mask: Check both alpha channel and RGB values
     // SAM2 masks can be: 1) Alpha channel mask, 2) RGB grayscale, or 3) Inverted
     let hasAlphaVariation = false;
     let hasRGBVariation = false;
-    
+
     // Sample to detect mask type
     for (let i = 0; i < Math.min(1000, maskData.data.length); i += 4) {
       if (maskData.data[i + 3] < 255) hasAlphaVariation = true;
       if (maskData.data[i] !== maskData.data[i + 3]) hasRGBVariation = true;
     }
-    
+
     console.log('[MASK] Detected mask type:', { hasAlphaVariation, hasRGBVariation });
-    
+
     // Apply the mask and count non-transparent pixels
     let opaquePixelCount = 0;
     let semiTransparentCount = 0;
     let transparentCount = 0;
-    
+
     for (let i = 0; i < imageData.data.length; i += 4) {
       if (hasAlphaVariation) {
         // Use alpha channel directly
@@ -389,13 +373,13 @@ const registerLayer = useCallback(
         const maskValue = maskData.data[i]; // Red channel
         imageData.data[i + 3] = maskValue; // White (255) = opaque, Black (0) = transparent
       }
-      
+
       const alpha = imageData.data[i + 3];
       if (alpha > 200) opaquePixelCount++;
       else if (alpha > 50) semiTransparentCount++;
       else transparentCount++;
     }
-    
+
     const totalPixels = imageData.data.length / 4;
     console.log('[MASK] Final pixel counts:', {
       opaque: opaquePixelCount,
@@ -404,11 +388,11 @@ const registerLayer = useCallback(
       total: totalPixels,
       percentOpaque: ((opaquePixelCount / totalPixels) * 100).toFixed(1) + '%'
     });
-    
+
     ctx.putImageData(imageData, 0, 0);
 
     const result = canvas.toDataURL('image/png');
-    
+
     // Debug: Check if the result is different from the original (uncomment if needed)
     // console.log('[MASK] Created preview', {
     //   baseSize: `${baseImage.width}x${baseImage.height}`,
@@ -500,15 +484,15 @@ const registerLayer = useCallback(
 
       // Collect all segment layers first, then add them in one batch
       const newSegmentLayers: Layer[] = [];
-      
+
       for (let i = 0; i < items.length; i += 1) {
         const item = items[i];
         const itemSource = item?.data_url || item?.url;
-        
+
         // Try to find corresponding mask
         const maskItem = masks[i];
         const maskSource = maskItem?.data_url || maskItem?.url || (isSegmentedImages ? undefined : itemSource);
-        
+
         console.log(`[SEGMENT ${i + 1}] Item:`, {
           hasDataUrl: !!item?.data_url,
           hasUrl: !!item?.url,
@@ -520,13 +504,13 @@ const registerLayer = useCallback(
           console.warn(`[SEGMENT ${i + 1}] No source found, skipping`);
           continue;
         }
-        
+
         try {
           // If we have segmented_images, they're already the extracted objects
           // If we have individual_masks, we need to apply them to the base image
           let preview: string;
           let boundingBox: BoundingBox | null = null;
-          
+
           if (isSegmentedImages) {
             // Already segmented - just use it directly
             preview = itemSource;
@@ -539,7 +523,7 @@ const registerLayer = useCallback(
             const maskImage = await loadImageElement(itemSource);
             console.log(`[SEGMENT ${i + 1}] Loaded base: ${baseImage.width}x${baseImage.height}, mask: ${maskImage.width}x${maskImage.height}`);
             console.log(`[SEGMENT ${i + 1}] Mask src hash:`, itemSource.substring(0, 100));
-            
+
             // TEMP DEBUG: For the first and second segments, log details
             if (i === 0 || i === 1) {
               console.log(`[DEBUG] Segment ${i + 1} mask URL:`, itemSource.substring(0, 150));
@@ -549,7 +533,7 @@ const registerLayer = useCallback(
             boundingBox = extractBoundingBox(maskImage);
             console.log(`[SEGMENT ${i + 1}] Created preview, boundingBox:`, boundingBox);
           }
-          
+
           const layer: Layer = {
             id: `segment-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 6)}`,
             name: `Segment ${i + 1}`,
@@ -562,7 +546,7 @@ const registerLayer = useCallback(
               boundingBox,
             },
           };
-          
+
           newSegmentLayers.push(layer);
           console.log(`[SEGMENT ${i + 1}] Layer created with preview length: ${preview.length}`);
         } catch (segmentError) {
@@ -582,14 +566,6 @@ const registerLayer = useCallback(
     [createMaskedPreview, extractBoundingBox, loadImageElement, registerLayer],
   );
 
-  const handleAddAdjustmentLayer = useCallback(() => {
-    registerLayer({
-      name: `Adjustment ${adjustmentCount}`,
-      kind: 'empty',
-      preview: null,
-    });
-    setAdjustmentCount((count) => count + 1);
-  }, [adjustmentCount, registerLayer]);
 
   useEffect(() => {
     if (!layers.length) {
@@ -605,7 +581,11 @@ const registerLayer = useCallback(
   const activeLayer = selectedLayerId
     ? layers.find((layer) => layer.id === selectedLayerId) ?? layers[0]
     : layers[0];
-  const displayedImage = activeLayer?.preview || editedImage || image;
+
+  // Display the selected layer if it exists and is visible
+  const displayedImage = activeLayer && activeLayer.visible !== false
+    ? activeLayer.preview
+    : null;
   const canCrop = Boolean(displayedImage);
   const segmentLayers = layers.filter((layer) => layer.kind === 'segment');
   const baseImageForSegments = editedImage || image || null;
@@ -644,7 +624,7 @@ const registerLayer = useCallback(
     try {
       const blob = await dataUrlToBlob(baseImageSource);
       const segmentationData = await segmentImage(blob);
-      
+
       // Debug: Log what we received
       console.log('[SEGMENT] Received data:', {
         hasIndividualMasks: !!segmentationData?.individual_masks,
@@ -653,16 +633,16 @@ const registerLayer = useCallback(
         segmentedImagesCount: segmentationData?.segmented_images?.length,
         keys: Object.keys(segmentationData || {})
       });
-      
+
       // Check if we should use segmented_images (pre-extracted objects) or individual_masks (need to apply to base)
       const hasSegmentedImages = segmentationData?.segmented_images && segmentationData.segmented_images.length > 0;
-      const itemsToUse = hasSegmentedImages 
-        ? segmentationData.segmented_images 
+      const itemsToUse = hasSegmentedImages
+        ? segmentationData.segmented_images
         : (segmentationData?.individual_masks || []);
       const masksToUse = segmentationData?.individual_masks || [];
-      
+
       console.log('[SEGMENT] Using:', hasSegmentedImages ? 'segmented_images' : 'individual_masks', itemsToUse.length);
-      
+
       await createSegmentLayers(baseImageSource, itemsToUse, hasSegmentedImages, masksToUse);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Segmentation failed';
@@ -692,11 +672,9 @@ const registerLayer = useCallback(
         setShowCropper(false);
         setCropTargetLayerId(null);
       }
-      if (toolId === 'magic' && image) {
-        handleAutoSegment();
-      }
+      // Note: Auto-segment removed as Gemini API does not support segmentation
     },
-    [activeLayer, baseLayer, canCrop, handleAutoSegment, image, selectedLayerId],
+    [activeLayer, baseLayer, canCrop, image, selectedLayerId],
   );
 
 
@@ -772,10 +750,10 @@ const registerLayer = useCallback(
       setLayers((prev) => {
         let updated = targetLayer
           ? prev.map((layer) =>
-              layer.id === targetLayer.id
-                ? { ...layer, preview: croppedDataUrl, timestamp: new Date().toLocaleTimeString() }
-                : layer,
-            )
+            layer.id === targetLayer.id
+              ? { ...layer, preview: croppedDataUrl, timestamp: new Date().toLocaleTimeString() }
+              : layer,
+          )
           : prev;
 
         if (shouldResetSegments) {
@@ -827,13 +805,8 @@ const registerLayer = useCallback(
 
   const handleLayerSelect = (layerId: string) => {
     setSelectedLayerId(layerId);
-    
-    // TEMP: Log which layer was selected for debugging
     const layer = layers.find(l => l.id === layerId);
-    console.log('[LAYER SELECT]', layer?.name, 'preview length:', layer?.preview?.length);
-    if (layer?.preview) {
-      console.log('[LAYER SELECT] Preview URL (open in new tab):', layer.preview);
-    }
+    console.log('[LAYER SELECT]', layer?.name, 'has preview:', !!layer?.preview);
   };
 
   const toggleLayerVisibility = useCallback((layerId: string, soloMode: boolean = false) => {
@@ -883,7 +856,6 @@ const registerLayer = useCallback(
         image: await dataUrlToBlob(image),
         prompt: filterPrompt.trim(),
         negativePrompt: negativePrompt.trim() || undefined,
-        model,
       });
 
       const imageUrl = extractImageUrl(data);
@@ -927,7 +899,6 @@ const registerLayer = useCallback(
         image: blob,
         prompt: action.prompt.trim(),
         negativePrompt: action.negativePrompt?.trim() || undefined,
-        model,
       });
 
       const imageUrl = extractImageUrl(data);
@@ -968,7 +939,7 @@ const registerLayer = useCallback(
       .then((health) => {
         setApiConfigured(health.apiConfigured);
         if (!health.apiConfigured) {
-          setError('API key not configured. Please set FAL_API_KEY in backend/.env');
+          setError('API key not configured. Please set GEMINI_API_KEY in backend/.env');
         }
       })
       .catch(() => {
@@ -1047,14 +1018,12 @@ const registerLayer = useCallback(
           image: blob,
           prompt: prompt.trim(),
           negativePrompt: negativePrompt.trim() || undefined,
-          model,
         });
       } else {
         // Call generate API
         data = await generateImage({
           prompt: prompt.trim(),
           negativePrompt: negativePrompt.trim() || undefined,
-          model,
         });
       }
 
@@ -1116,7 +1085,7 @@ const registerLayer = useCallback(
           <Sparkles className="brand-icon" size={20} />
           <div>
             <p className="brand-title">NanoBanana Studio</p>
-            <span className="brand-subtitle">NanoBanana & Pro • fal.ai</span>
+            <span className="brand-subtitle">Powered by Google Gemini</span>
           </div>
         </div>
 
@@ -1205,20 +1174,6 @@ const registerLayer = useCallback(
                 Generate
               </button>
             </div>
-            <div className="model-toggle chips">
-              {modelOptions.map((option) => (
-                <button
-                  key={option.id}
-                  className={`model-chip ${model === option.id ? 'active' : ''}`}
-                  onClick={() => setModel(option.id)}
-                  type="button"
-                  disabled={isLoading}
-                >
-                  <strong>{option.label}</strong>
-                  <span>{option.description}</span>
-                </button>
-              ))}
-            </div>
           </div>
 
           <div className="canvas-stage">
@@ -1253,14 +1208,11 @@ const registerLayer = useCallback(
                     </div>
                   ) : (
                     <div className="canvas-stack">
-                      {baseImageForSegments && (
+                      {displayedImage && (
                         <img
-                          src={baseImageForSegments}
+                          src={displayedImage}
                           alt="Canvas preview"
                           className="result-image"
-                          style={{
-                            visibility: showBaseImage ? 'visible' : 'hidden',
-                          }}
                         />
                       )}
                       {segmentLayers.length > 0 && (
@@ -1277,7 +1229,7 @@ const registerLayer = useCallback(
                             }
                             const isVisible = layer.visible !== false;
                             const isSelected = layer.id === activeLayer?.id;
-                            
+
                             // Debug first layer
                             if (idx === 0) {
                               console.log(`[RENDER] First segment layer:`, {
@@ -1288,7 +1240,7 @@ const registerLayer = useCallback(
                                 previewStart: layer.preview.substring(0, 50)
                               });
                             }
-                            
+
                             return (
                               <div
                                 key={layer.id}
@@ -1364,23 +1316,25 @@ const registerLayer = useCallback(
                     <Layers size={16} />
                     <span>Layers</span>
                   </div>
-                  <button className="layer-add-btn" type="button" onClick={handleAddAdjustmentLayer}>
-                    <Plus size={14} />
-                    New layer
-                  </button>
                 </div>
                 <div className="layer-list">
                   {layers.length === 0 ? (
                     <div className="layer-item muted">Layers will appear here</div>
                   ) : (
                     layers.map((layer) => (
-                      <button
+                      <div
                         key={layer.id}
-                        type="button"
                         onClick={() => handleLayerSelect(layer.id)}
-                        className={`layer-item ${
-                          layer.id === activeLayer?.id ? 'active' : ''
-                        } ${!layer.preview ? 'muted' : ''} ${layer.visible === false ? 'hidden' : ''}`}
+                        className={`layer-item ${layer.id === activeLayer?.id ? 'active' : ''
+                          } ${!layer.preview ? 'muted' : ''} ${layer.visible === false ? 'hidden' : ''}`}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleLayerSelect(layer.id);
+                          }
+                        }}
                       >
                         <div className="layer-meta">
                           <strong>{layer.name}</strong>
@@ -1436,7 +1390,7 @@ const registerLayer = useCallback(
                             </button>
                           )}
                         </div>
-                      </button>
+                      </div>
                     ))
                   )}
                 </div>

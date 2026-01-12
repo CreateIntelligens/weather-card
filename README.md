@@ -1,6 +1,6 @@
 # NanoBanana Studio
 
-A modern, AI-powered image editor alternative to Photoshop/Photopea, powered by Google's nanobanana API from [fal.ai](https://fal.ai/dashboard).
+A modern, AI-powered image editor alternative to Photoshop/Photopea, powered by Google's Gemini API.
 
 ![NanoBanana Studio Screenshot](./screenshot.png)
 
@@ -9,13 +9,13 @@ A modern, AI-powered image editor alternative to Photoshop/Photopea, powered by 
 - 🎨 **AI-Powered Image Editing**: Edit images using natural language prompts
 - ✨ **Image Generation**: Generate new images from text descriptions
 - 🖼️ **Intuitive UI**: Clean, modern interface inspired by professional image editors
-- ⚡ **Model Switcher**: Toggle between NanoBanana and [NanoBanana Pro](https://fal.ai/models/fal-ai/nano-banana-pro/edit/api) on the fly
+- ⚡ **Google Gemini**: Powered by state-of-the-art vision models
 - 💾 **Easy Export**: Download your edited images with one click
 
 ## Prerequisites
 
 - Node.js 18+ and npm
-- A fal.ai API key ([Get one here](https://fal.ai/dashboard/keys))
+- A Google Gemini API key ([Get one here](https://aistudio.google.com/app/apikey))
 
 ## Installation
 
@@ -32,14 +32,15 @@ cd backend
 cp env.example .env
 ```
 
-Edit `backend/.env` and add your fal.ai API key:
+Edit `backend/.env` and add your Google Gemini API key:
 
 ```
-FAL_API_KEY=your_fal_ai_api_key_here
+GEMINI_API_KEY=your_gemini_api_key_here
+GEMINI_MODEL=gemini-2.5-flash-image
 PORT=3001
 ```
 
-**Note:** Get your fal.ai API key from [fal.ai](https://fal.ai). You'll need to sign up and create an API key in your dashboard.
+**Note:** Get your Google API key from [Google AI Studio](https://aistudio.google.com/app/apikey).
 
 ## Running the Application
 
@@ -48,12 +49,12 @@ PORT=3001
 The easiest way to run the application is using Docker:
 
 1. Make sure you have Docker and Docker Compose installed
-2. Create a `.env` file in the `backend` directory with your fal.ai API key:
+2. Create a `.env` file in the `backend` directory with your API key:
 
 ```bash
 cd backend
 cp env.example .env
-# Edit .env and add your FAL_API_KEY
+# Edit .env and add your GEMINI_API_KEY
 ```
 
 3. Start the application:
@@ -99,24 +100,16 @@ npm run dev
 ### Edit Mode
 
 1. Click "Upload Image" to select an image file
-2. Enter a natural language prompt describing the edits you want (e.g., "make the sky more dramatic", "add a sunset", "remove the background")
+2. Enter a natural language prompt describing the edits you want (e.g., "make the sky more dramatic", "add a sunset")
 3. Optionally add a negative prompt to exclude unwanted elements
 4. Click "Edit Image" and wait for processing
 5. Download your edited image
 
 ## API Configuration
 
-**Important:** The application uses fal.ai's NanoBanana APIs:
+The application uses Google Gemini's vision capabilities for image editing and generation.
 
-- Standard: [NanoBanana Edit](https://fal.ai/models/fal-ai/nano-banana/edit/api)
-- Pro tier: [NanoBanana Pro Edit](https://fal.ai/models/fal-ai/nano-banana-pro/edit/api)
-
-Select your model in the UI, and the backend automatically routes to the appropriate endpoint. If fal.ai updates these URLs, adjust `MODEL_ENDPOINTS` in `backend/server.js`.
-
-To verify the correct endpoint:
-1. Check the [fal.ai documentation](https://fal.ai/models)
-2. Look for the nanobanana model endpoint
-3. Update the fetch URL in `backend/server.js` if needed
+Select your model type in the UI, and the backend automatically routes to the Gemini API.
 
 ## API Endpoints
 
@@ -144,9 +137,7 @@ Generate a new image from text.
 ```json
 {
   "prompt": "a beautiful landscape...",
-  "negativePrompt": "blurry, low quality",
-  "width": 1024,
-  "height": 1024
+  "negativePrompt": "blurry, low quality"
 }
 ```
 
@@ -161,7 +152,7 @@ Generate a new image from text.
 
 - **Frontend**: React + TypeScript + Vite
 - **Backend**: Node.js + Express
-- **AI**: Google nanobanana via fal.ai
+- **AI**: Google Gemini
 - **UI**: Custom CSS with modern design
 
 ## Project Structure
@@ -203,4 +194,3 @@ MIT
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
-

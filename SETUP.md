@@ -13,10 +13,9 @@ This will install dependencies for:
 
 ## Step 2: Configure API Key
 
-1. Get your fal.ai API key:
-   - Visit [fal.ai](https://fal.ai)
+1. Get your Google Gemini API key:
+   - Visit [Google AI Studio](https://aistudio.google.com/app/apikey)
    - Sign up or log in
-   - Navigate to your API keys section
    - Create a new API key
 
 2. Set up environment variables:
@@ -27,7 +26,8 @@ This will install dependencies for:
 
 3. Edit `backend/.env` and paste your API key:
    ```
-   FAL_API_KEY=your_actual_api_key_here
+   GEMINI_API_KEY=your_actual_api_key_here
+   GEMINI_MODEL=gemini-2.5-flash-image
    PORT=3001
    ```
 
@@ -59,14 +59,13 @@ This starts:
 
 ## Troubleshooting
 
-### "FAL_API_KEY not configured" error
+### "GEMINI_API_KEY not configured" error
 - Make sure you created the `.env` file in the `backend` directory
 - Verify the API key is correct (no extra spaces)
 - Restart the backend server after adding the key
 
 ### API endpoint errors
-- Check that your fal.ai API key is valid
-- Verify the endpoint URL in `backend/server.js` matches fal.ai's current API
+- Check that your Google API key is valid
 - Check the browser console and server logs for detailed error messages
 
 ### Port already in use

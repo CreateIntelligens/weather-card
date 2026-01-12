@@ -1,7 +1,6 @@
 import { EditResponse, EditImageParams, GenerateImageParams, InpaintImageParams } from './types';
 
 const API_BASE = '/api';
-const DEFAULT_MODEL = 'nano';
 
 async function handleApiResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
@@ -15,11 +14,10 @@ export async function editImage(params: EditImageParams): Promise<EditResponse> 
   const formData = new FormData();
   formData.append('image', params.image, 'image.png');
   formData.append('prompt', params.prompt);
-  
+
   if (params.negativePrompt) {
     formData.append('negativePrompt', params.negativePrompt);
   }
-  formData.append('model', params.model ?? DEFAULT_MODEL);
 
   const response = await fetch(`${API_BASE}/edit-image`, {
     method: 'POST',
@@ -65,7 +63,6 @@ export async function generateImage(params: GenerateImageParams): Promise<EditRe
       negativePrompt: params.negativePrompt || undefined,
       width: params.width,
       height: params.height,
-      model: params.model ?? DEFAULT_MODEL,
     }),
   });
 

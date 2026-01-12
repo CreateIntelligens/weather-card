@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-NanoBanana Studio is a full-stack AI image editor powered by Google's nanobanana API via fal.ai. The project uses a modern tech stack with strong typing and comprehensive error handling.
+NanoBanana Studio is a full-stack AI image editor powered by Google's Gemini API. The project uses a modern tech stack with strong typing and comprehensive error handling.
 
 ## Architecture
 
@@ -50,7 +50,7 @@ npm run install:all
 # Set up environment
 cd backend
 cp env.example .env
-# Edit .env and add FAL_API_KEY
+# Edit .env and add GEMINI_API_KEY
 ```
 
 ### 2. Running Development Servers
@@ -163,11 +163,11 @@ curl -X POST http://localhost:3001/api/edit-image \
 
 ## Common Issues & Solutions
 
-### Issue: "FAL_API_KEY not configured"
-**Solution**: Create `backend/.env` file with valid API key
+### Issue: "GEMINI_API_KEY not configured"
+**Solution**: Create `backend/.env` file with valid Google Gemini API key
 
 ### Issue: CORS errors
-**Solution**: Backend already has CORS enabled; check proxy configuration in `vite.config.ts`
+**Solution**: Backend already has CORS enabled; check proxy configuration in `frontend/vite.config.ts`
 
 ### Issue: File upload fails
 **Solution**: 
@@ -178,7 +178,7 @@ curl -X POST http://localhost:3001/api/edit-image \
 ### Issue: Timeout errors
 **Solution**: 
 - Increase timeout in `backend/server.js` (API_TIMEOUT constant)
-- Check fal.ai API status
+- Check Google API status
 - Reduce image size
 
 ## Adding New Features
@@ -242,20 +242,20 @@ const handleNewFeature = async () => {
 3. Start server: `cd backend && npm start`
 
 ### Recommended Platforms
-- **Backend**: Railway, Render, Heroku
-- **Frontend**: Vercel, Netlify
-- **Full Stack**: Railway, Render
+- **Full Stack**: Railway, Render, Fly.io
+- **Frontend Only**: Vercel, Netlify
 
 ### Environment Variables for Production
 ```
-FAL_API_KEY=your_production_key
+GEMINI_API_KEY=your_production_key
+GEMINI_MODEL=gemini-2.5-flash-image
 PORT=3001
 NODE_ENV=production
 ```
 
 ## Resources
 
-- [fal.ai Documentation](https://fal.ai/models)
+- [Google AI Studio (Gemini)](https://aistudio.google.com/app/apikey)
 - [React Documentation](https://react.dev)
 - [Express Documentation](https://expressjs.com)
 - [Vite Documentation](https://vitejs.dev)
