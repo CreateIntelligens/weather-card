@@ -658,8 +658,8 @@ function App() {
       }
     }
 
-    if (mode === 'edit' && !image) {
-      setError('Please upload an image first');
+    if (mode === 'edit' && !displayedImage) {
+      setError('Please select an image layer to edit');
       return;
     }
 
@@ -675,8 +675,8 @@ function App() {
       let data;
 
       if (mode === 'edit') {
-        // Convert data URL to blob
-        const blob = await dataUrlToBlob(image!);
+        // Convert data URL to blob - use displayedImage (current layer) instead of original image
+        const blob = await dataUrlToBlob(displayedImage!);
 
         // Call edit API
         data = await editImage({
@@ -1178,7 +1178,6 @@ function App() {
                     className="preset-chip"
                     onClick={() => {
                       setPrompt(preset.prompt);
-                      setActiveTool('select');
                     }}
                     title={preset.prompt}
                     disabled={isLoading}
@@ -1219,7 +1218,7 @@ function App() {
 
             <button
               onClick={handleProcess}
-              disabled={isLoading || (mode === 'edit' && !image) || (mode === 'weather' ? !city.trim() : !prompt.trim())}
+              disabled={isLoading || (mode === 'edit' && !displayedImage) || (mode === 'weather' ? !city.trim() : !prompt.trim())}
               className="edit-btn"
               title="Ctrl/Cmd + Enter"
               type="button"
