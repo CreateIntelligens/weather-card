@@ -72,10 +72,7 @@ function App() {
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [aiLayerCount, setAiLayerCount] = useState(0);
   const [aspect, setAspect] = useState<number | undefined>(3 / 2);
-  const [canvasBounds, setCanvasBounds] = useState<{ width: number; height: number } | null>(null);
-  const [naturalImageSize, setNaturalImageSize] = useState<{ width: number; height: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const canvasAreaRef = useRef<HTMLDivElement>(null);
 
   const menuItems = ['Export', 'Help'];
 
@@ -85,6 +82,34 @@ function App() {
     // Weather mode doesn't need any tools
     { id: 'crop', label: 'Crop', icon: Crop },
     { id: 'magic', label: 'Magic', icon: Wand2 },
+  ];
+
+  const presetPrompts = [
+    {
+      label: 'Portrait glow',
+      prompt:
+        'Hyper-real studio portrait, cinematic rim lighting, polished skin texture, subtle bokeh background, warm highlights',
+    },
+    {
+      label: 'Cinematic matte',
+      prompt:
+        'Moody widescreen grade, teal and amber palette, lifted blacks, film grain, dramatic contrast, cinematic atmosphere',
+    },
+    {
+      label: 'Product polish',
+      prompt:
+        'Luxury product beauty lighting, reflective podium, glossy highlights, high-contrast shadows, editorial look',
+    },
+    {
+      label: 'Golden hour',
+      prompt:
+        'Sunset hues, soft volumetric light, warm peach glow, long natural shadows, coastal warmth, dreamy tone',
+    },
+    {
+      label: 'Analog film',
+      prompt:
+        'Kodak portra palette, soft halation, subtle film grain, gentle fades, authentic analog imperfections',
+    },
   ];
 
   const filterPresets = [
@@ -267,24 +292,6 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const canvasArea = canvasAreaRef.current;
-    if (!canvasArea || typeof ResizeObserver === 'undefined') {
-      return;
-    }
-    const observer = new ResizeObserver((entries) => {
-      const entry = entries[0];
-      if (!entry) {
-        return;
-      }
-      const { width, height } = entry.contentRect;
-      setCanvasBounds({ width, height });
-    });
-    observer.observe(canvasArea);
-    return () => observer.disconnect();
-  }, []);
-
-
-  useEffect(() => {
     if (!layers.length) {
       setSelectedLayerId(null);
       return;
@@ -304,40 +311,6 @@ function App() {
     ? activeLayer.preview
     : null;
   const canCrop = Boolean(displayedImage);
-
-  useEffect(() => {
-    setNaturalImageSize(null);
-  }, [displayedImage]);
-
-  const scaledImageSize = useMemo(() => {
-    if (!canvasBounds || !naturalImageSize) {
-      return null;
-    }
-    // canvas-area padding: 20px on each side
-    const canvasPadding = 20;
-    // framed container padding: 20px on each side
-    const framePadding = 20;
-    // framed container border: 3px on each side
-    const frameBorder = 3;
-
-    const availableWidth = canvasBounds.width - (canvasPadding * 2) - (framePadding * 2) - (frameBorder * 2);
-    const availableHeight = canvasBounds.height - (canvasPadding * 2) - (framePadding * 2) - (frameBorder * 2);
-
-    if (availableWidth <= 0 || availableHeight <= 0) {
-      return null;
-    }
-
-    const scale = Math.min(
-      availableWidth / naturalImageSize.width,
-      availableHeight / naturalImageSize.height,
-      1,
-    );
-
-    return {
-      width: Math.floor(naturalImageSize.width * scale),
-      height: Math.floor(naturalImageSize.height * scale),
-    };
-  }, [canvasBounds, naturalImageSize]);
 
   const baseImageForSegments = editedImage || image || null;
   const sourceLayer = layers.find((layer) => layer.kind === 'source');
@@ -795,21 +768,23 @@ function App() {
           </div>
         </div>
 
-        <div className="quick-action-nav">
-          {quickEdits.map((action) => (
-            <button
-              key={action.label}
-              type="button"
-              className="quick-action-icon-btn"
-              onClick={() => handleQuickEdit(action)}
-              disabled={!hasEditableImage || isLoading}
-              title={action.description}
-            >
-              <action.icon size={16} />
-              <span>{action.label}</span>
-            </button>
-          ))}
-        </div>
+        {mode !== 'weather' && (
+          <div className="quick-action-nav">
+            {quickEdits.map((action) => (
+              <button
+                key={action.label}
+                type="button"
+                className="quick-action-icon-btn"
+                onClick={() => handleQuickEdit(action)}
+                disabled={!hasEditableImage || isLoading}
+                title={action.description}
+              >
+                <action.icon size={16} />
+                <span>{action.label}</span>
+              </button>
+            ))}
+          </div>
+        )}
 
         <nav className="menu-strip">
           {menuItems.map((label) => (
@@ -892,7 +867,7 @@ function App() {
           </div>
 
           <div className="canvas-stage">
-            <div className="canvas-area pro" ref={canvasAreaRef}>
+            <div className="canvas-area pro">
               {!displayedImage ? (
                 mode === 'edit' ? (
                   <div className="empty-state">
@@ -928,18 +903,6 @@ function App() {
                           src={displayedImage}
                           alt="Canvas preview"
                           className="result-image"
-                          onLoad={(event) => {
-                            const { naturalWidth, naturalHeight } = event.currentTarget;
-                            setNaturalImageSize({ width: naturalWidth, height: naturalHeight });
-                          }}
-                          style={
-                            scaledImageSize
-                              ? {
-                                width: `${scaledImageSize.width}px`,
-                                height: `${scaledImageSize.height}px`,
-                              }
-                              : undefined
-                          }
                         />
                       )}
                       {editedImage && (
@@ -1203,6 +1166,26 @@ function App() {
                     Apply crop
                   </button>
                 </div>
+              </div>
+            )}
+
+            {activeTool === 'magic' && (
+              <div className="preset-grid">
+                {presetPrompts.map((preset) => (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    className="preset-chip"
+                    onClick={() => {
+                      setPrompt(preset.prompt);
+                      setActiveTool('select');
+                    }}
+                    title={preset.prompt}
+                    disabled={isLoading}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
               </div>
             )}
 

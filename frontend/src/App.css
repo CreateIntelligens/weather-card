@@ -362,34 +362,11 @@
   background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
   background-size: 20px 20px;
   display: flex;
-  /* ... */
-  /* Removed duplicate display: flex */
-  align-items: center;
-  /* Center content vertically */
+  align-items: flex-start;
   justify-content: center;
-  /* Center content horizontally */
-  padding: 20px;
+  padding: 40px;
   position: relative;
-  overflow: hidden;
-  /* Prevent scrolling, force content to fit or be handled by inner logic */
-  height: 100%;
-  box-sizing: border-box;
-  min-height: 0;
-}
-
-/* Add .canvas-stack constraint */
-/* Use flex column to center content. */
-.canvas-stack {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  max-width: 100%;
-  max-height: 100%;
-  min-height: 0;
-  overflow: hidden;
+  overflow: auto;
 }
 
 .canvas-area.pro {
@@ -433,13 +410,11 @@
 
 .image-container {
   position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   max-width: 100%;
   max-height: 100%;
-  min-height: 0;
-  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .image-container.framed {
@@ -448,27 +423,11 @@
   background: #ffffff;
   box-shadow: 6px 6px 0px #000000;
   border: 3px solid #000000;
-  box-sizing: border-box;
-  max-width: 100%;
-  max-height: 100%;
-  /* fit-content ensures the container shrinks to the image size */
-  width: fit-content;
-  height: fit-content;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  overflow: hidden;
 }
 
-/* Ensure image strictly fits within container */
 .result-image {
   max-width: 100%;
-  max-height: 100%;
-  width: auto;
   height: auto;
-  /* Crucial: object-fit contain ensures aspect ratio is preserved and it fits in the box */
-  object-fit: contain;
   border-radius: 4px;
   border: 2px solid #000000;
   display: block;
