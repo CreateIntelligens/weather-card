@@ -169,9 +169,11 @@
   flex: 1;
   display: grid;
   grid-template-columns: 80px 1fr 380px;
+  grid-template-rows: minmax(0, 1fr);
   overflow: hidden;
   background: #e0e7ff;
   gap: 0;
+  min-height: 0;
 }
 
 .tool-panel {
@@ -233,6 +235,8 @@
   background: #ffffff;
   overflow: hidden;
   border-right: 3px solid #000000;
+  min-height: 0;
+  height: 100%;
 }
 
 .options-bar {
@@ -345,9 +349,12 @@
   flex: 1;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-rows: minmax(0, 1fr);
   overflow: hidden;
   gap: 0;
   background: #e0e7ff;
+  min-height: 0;
+  height: 100%;
 }
 
 .canvas-area {
@@ -355,11 +362,34 @@
   background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
   background-size: 20px 20px;
   display: flex;
-  align-items: flex-start;
+  /* ... */
+  /* Removed duplicate display: flex */
+  align-items: center;
+  /* Center content vertically */
   justify-content: center;
-  padding: 40px;
+  /* Center content horizontally */
+  padding: 20px;
   position: relative;
-  overflow: auto;
+  overflow: hidden;
+  /* Prevent scrolling, force content to fit or be handled by inner logic */
+  height: 100%;
+  box-sizing: border-box;
+  min-height: 0;
+}
+
+/* Add .canvas-stack constraint */
+/* Use flex column to center content. */
+.canvas-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .canvas-area.pro {
@@ -403,11 +433,13 @@
 
 .image-container {
   position: relative;
-  max-width: 100%;
-  max-height: 100%;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  max-width: 100%;
+  max-height: 100%;
+  min-height: 0;
+  min-width: 0;
 }
 
 .image-container.framed {
@@ -416,11 +448,27 @@
   background: #ffffff;
   box-shadow: 6px 6px 0px #000000;
   border: 3px solid #000000;
+  box-sizing: border-box;
+  max-width: 100%;
+  max-height: 100%;
+  /* fit-content ensures the container shrinks to the image size */
+  width: fit-content;
+  height: fit-content;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
 }
 
+/* Ensure image strictly fits within container */
 .result-image {
   max-width: 100%;
+  max-height: 100%;
+  width: auto;
   height: auto;
+  /* Crucial: object-fit contain ensures aspect ratio is preserved and it fits in the box */
+  object-fit: contain;
   border-radius: 4px;
   border: 2px solid #000000;
   display: block;
@@ -478,6 +526,7 @@
   overflow-y: auto;
   background: #ffffff;
   border-left: 3px solid #000000;
+  min-height: 0;
 }
 
 /* Custom scrollbar */
@@ -714,6 +763,7 @@
   overflow-y: auto;
   background: #ffffff;
   border-left: 3px solid #000000;
+  min-height: 0;
 }
 
 .upload-deck {
@@ -1123,6 +1173,7 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -1131,8 +1182,12 @@
 /* Canvas and segmentation styling */
 .canvas-stack {
   position: relative;
-  width: 100%;
-  height: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  max-height: 100%;
+  overflow: hidden;
   /* Checkerboard pattern to show transparency */
   background-image:
     linear-gradient(45deg, #f8fafc 25%, #e2e8f0 25%),

@@ -8,17 +8,21 @@ You are a weather data assistant.
 The user wants a weather card for the city: "${city}".
 
 Current System UTC Time: ${currentUtcTime}
-Target Language: ${langInstruction}
+Target Language (STRICT): ${langInstruction}
 
 Task:
-1. Identify the city's location and timezone.
-2. Calculate the CURRENT local date and time for that city based on the UTC time provided above.
-3. Determine the likely current weather condition (e.g. based on season/latitude) or use "Sunny" as a default if unsure, but try to be realistic for the season.
-4. Provide the following fields strictly in JSON format:
-    - "native_city_name": The name of the city translated into ${langInstruction}.
-    - "native_date_formatted": The current local date formatted in ${langInstruction}.
-    - "weather_condition": The weather condition translated into ${langInstruction}.
-    - "temp_range": A realistic temperature range for today in the local unit (e.g. "15°C - 20°C").
+1. Identify if "${city}" is a REAL, VALID city name. If it's not a real city, fictional, or nonsense text, return error JSON.
+2. If valid, identify the city's location and timezone.
+3. Calculate the CURRENT local date and time for that city based on the UTC time provided above.
+4. Determine the likely current weather condition based on season/latitude (be realistic for the season).
+5. Provide the following fields strictly in JSON format:
+    - "error": (string, optional) Set to "Invalid city name" if the city doesn't exist. If this field is present, skip other fields.
+    - "native_city_name": The name of the city TRANSLATED into ${langInstruction}.
+    - "native_date_formatted": The current local date (Year, Month, Day, Weekday) formatted in ${langInstruction}. DO NOT include specific time (HH:MM).
+    - "weather_condition": The weather condition TRANSLATED into ${langInstruction}.
+    - "temp_range": A realistic temperature range for today in the local unit (e.g. "18°C - 20°C").
+
+CRITICAL: You must TRANSLATE all output values into ${langInstruction}. For example, if the target is "Traditional Chinese", translate "New York" to "紐約", "Tokyo" to "東京". Do not output English or Japanese characters unless that IS the target language.
 
 Output JSON only. No markdown.
 `.trim();

@@ -6,4 +6,4 @@ build/
 *.log
 .vscode/
 .idea/
-
+.*-mcp

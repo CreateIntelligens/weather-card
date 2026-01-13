@@ -56,7 +56,7 @@ function App() {
   const [prompt, setPrompt] = useState('');
   const [city, setCity] = useState('');
   const [weatherAspect, setWeatherAspect] = useState('9:16');
-  const [weatherLanguage, setWeatherLanguage] = useState('中文');
+  const [weatherLanguage, setWeatherLanguage] = useState('Traditional Chinese');
   const [negativePrompt, setNegativePrompt] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -72,7 +72,10 @@ function App() {
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [aiLayerCount, setAiLayerCount] = useState(0);
   const [aspect, setAspect] = useState<number | undefined>(3 / 2);
+  const [canvasBounds, setCanvasBounds] = useState<{ width: number; height: number } | null>(null);
+  const [naturalImageSize, setNaturalImageSize] = useState<{ width: number; height: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const canvasAreaRef = useRef<HTMLDivElement>(null);
 
   const menuItems = ['Export', 'Help'];
 
@@ -214,7 +217,7 @@ function App() {
   const weatherLanguagePresets = [
     { label: '中文', value: 'Traditional Chinese' },
     { label: 'Local (Auto)', value: 'Local (Auto)' },
-    { label: 'English', value: 'English' },    
+    { label: 'English', value: 'English' },
     { label: 'Japanese', value: 'Japanese' },
     { label: 'Korean', value: 'Korean' },
   ];
@@ -263,6 +266,22 @@ function App() {
     });
   }, []);
 
+  useEffect(() => {
+    const canvasArea = canvasAreaRef.current;
+    if (!canvasArea || typeof ResizeObserver === 'undefined') {
+      return;
+    }
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (!entry) {
+        return;
+      }
+      const { width, height } = entry.contentRect;
+      setCanvasBounds({ width, height });
+    });
+    observer.observe(canvasArea);
+    return () => observer.disconnect();
+  }, []);
 
 
   useEffect(() => {
@@ -285,6 +304,41 @@ function App() {
     ? activeLayer.preview
     : null;
   const canCrop = Boolean(displayedImage);
+
+  useEffect(() => {
+    setNaturalImageSize(null);
+  }, [displayedImage]);
+
+  const scaledImageSize = useMemo(() => {
+    if (!canvasBounds || !naturalImageSize) {
+      return null;
+    }
+    // canvas-area padding: 20px on each side
+    const canvasPadding = 20;
+    // framed container padding: 20px on each side
+    const framePadding = 20;
+    // framed container border: 3px on each side
+    const frameBorder = 3;
+
+    const availableWidth = canvasBounds.width - (canvasPadding * 2) - (framePadding * 2) - (frameBorder * 2);
+    const availableHeight = canvasBounds.height - (canvasPadding * 2) - (framePadding * 2) - (frameBorder * 2);
+
+    if (availableWidth <= 0 || availableHeight <= 0) {
+      return null;
+    }
+
+    const scale = Math.min(
+      availableWidth / naturalImageSize.width,
+      availableHeight / naturalImageSize.height,
+      1,
+    );
+
+    return {
+      width: Math.floor(naturalImageSize.width * scale),
+      height: Math.floor(naturalImageSize.height * scale),
+    };
+  }, [canvasBounds, naturalImageSize]);
+
   const baseImageForSegments = editedImage || image || null;
   const sourceLayer = layers.find((layer) => layer.kind === 'source');
   const historyEntries = [
@@ -677,7 +731,7 @@ function App() {
         if (mode === 'edit') layerName = `AI Output ${aiLayerCount + 1}`;
         else if (mode === 'generate') layerName = `Generation ${aiLayerCount + 1}`;
         else if (mode === 'weather') layerName = `Weather Card: ${city}`;
-        
+
         registerLayer({
           name: layerName,
           kind: 'ai',
@@ -838,7 +892,7 @@ function App() {
           </div>
 
           <div className="canvas-stage">
-            <div className="canvas-area pro">
+            <div className="canvas-area pro" ref={canvasAreaRef}>
               {!displayedImage ? (
                 mode === 'edit' ? (
                   <div className="empty-state">
@@ -874,6 +928,18 @@ function App() {
                           src={displayedImage}
                           alt="Canvas preview"
                           className="result-image"
+                          onLoad={(event) => {
+                            const { naturalWidth, naturalHeight } = event.currentTarget;
+                            setNaturalImageSize({ width: naturalWidth, height: naturalHeight });
+                          }}
+                          style={
+                            scaledImageSize
+                              ? {
+                                width: `${scaledImageSize.width}px`,
+                                height: `${scaledImageSize.height}px`,
+                              }
+                              : undefined
+                          }
                         />
                       )}
                       {editedImage && (
@@ -1021,8 +1087,8 @@ function App() {
                       <Languages size={14} /> Language
                     </label>
                   </div>
-                  
-                  <select 
+
+                  <select
                     value={weatherAspect}
                     onChange={(e) => setWeatherAspect(e.target.value)}
                     className="prompt-input"
@@ -1034,7 +1100,7 @@ function App() {
                     ))}
                   </select>
 
-                  <select 
+                  <select
                     value={weatherLanguage}
                     onChange={(e) => setWeatherLanguage(e.target.value)}
                     className="prompt-input"

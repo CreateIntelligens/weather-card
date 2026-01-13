@@ -222,6 +222,12 @@ app.post('/api/generate-weather-card', async (req, res) => {
       throw new Error("Failed to retrieve weather data");
     }
 
+    // Check if city is invalid
+    if (weatherData.error) {
+      console.log(`[WEATHER] Invalid city: ${city}`);
+      throw new Error(`"${city}" is not a valid city name. Please enter a real city.`);
+    }
+
     console.log(`[WEATHER] Data retrieved:`, weatherData);
 
     // Step 2: Construct Image Prompt
