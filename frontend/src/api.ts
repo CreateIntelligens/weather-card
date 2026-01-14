@@ -4,8 +4,20 @@ const API_BASE = '/api';
 
 async function handleApiResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ error: 'Failed to process request' }));
-    throw new Error(errorData.error || `Server error: ${response.status}`);
+    let errorMessage = `Server error: ${response.status}`;
+    try {
+      const errorData = await response.json();
+      errorMessage = errorData.error || errorMessage;
+    } catch (e) {
+      // If response is not JSON, try to get text
+      try {
+        const errorText = await response.text();
+        errorMessage = errorText || errorMessage;
+      } catch (e2) {
+        // Ignore
+      }
+    }
+    throw new Error(errorMessage);
   }
   return response.json();
 }

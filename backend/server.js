@@ -175,10 +175,31 @@ app.post('/api/generate-image', async (req, res) => {
     const response = await model.generateContent(prompt.trim());
 
     const result = response.response;
+
+    // Debug log the full response structure
+    console.log('[GENERATE] Response structure:', JSON.stringify({
+      hasCandidates: !!result.candidates,
+      candidatesLength: result.candidates?.length,
+      promptFeedback: result.promptFeedback,
+    }, null, 2));
+
+    // Check if candidates exist
+    if (!result.candidates || result.candidates.length === 0) {
+      const blockReason = result.promptFeedback?.blockReason;
+      const safetyRatings = result.promptFeedback?.safetyRatings;
+      console.log('[GENERATE] Blocked! Reason:', blockReason, 'Safety:', JSON.stringify(safetyRatings));
+      if (blockReason) {
+        throw new Error(`Image generation blocked: ${blockReason}. Please modify your prompt.`);
+      }
+      throw new Error('No response from Gemini API. Please try a different prompt.');
+    }
+
     const generatedImage = result.candidates[0]?.content?.parts[0]?.inlineData?.data;
 
     if (!generatedImage) {
-      throw new Error('No image generated from Gemini API');
+      // Log what we actually got
+      console.log('[GENERATE] No image in response. Parts:', JSON.stringify(result.candidates[0]?.content?.parts));
+      throw new Error('No image generated from Gemini API. The model may have returned text instead of an image.');
     }
 
     console.log('[GENERATE] Successfully generated image');

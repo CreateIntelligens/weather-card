@@ -715,7 +715,19 @@ function App() {
         throw new Error('No image in response. Please try again.');
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
+      let errorMessage = 'An unexpected error occurred';
+      if (err instanceof Error) {
+        // Clean up technical error messages
+        if (err.message.includes("Cannot read properties of undefined")) {
+          errorMessage = 'Image generation failed. The AI may have blocked this request due to content policy. Please try a different prompt.';
+        } else if (err.message.includes("blocked")) {
+          errorMessage = err.message;
+        } else if (err.message.includes("Server error")) {
+          errorMessage = 'Server error. Please try again later.';
+        } else {
+          errorMessage = err.message;
+        }
+      }
       setError(errorMessage);
       console.error('Error processing image:', err);
     } finally {
@@ -768,23 +780,21 @@ function App() {
           </div>
         </div>
 
-        {mode !== 'weather' && (
-          <div className="quick-action-nav">
-            {quickEdits.map((action) => (
-              <button
-                key={action.label}
-                type="button"
-                className="quick-action-icon-btn"
-                onClick={() => handleQuickEdit(action)}
-                disabled={!hasEditableImage || isLoading}
-                title={action.description}
-              >
-                <action.icon size={16} />
-                <span>{action.label}</span>
-              </button>
-            ))}
-          </div>
-        )}
+        <div className="quick-action-nav">
+          {quickEdits.map((action) => (
+            <button
+              key={action.label}
+              type="button"
+              className="quick-action-icon-btn"
+              onClick={() => handleQuickEdit(action)}
+              disabled={!hasEditableImage || isLoading}
+              title={action.description}
+            >
+              <action.icon size={16} />
+              <span>{action.label}</span>
+            </button>
+          ))}
+        </div>
 
         <nav className="menu-strip">
           {menuItems.map((label) => (

@@ -6,7 +6,7 @@ export default defineConfig({
   server: {
     port: 3000,
     host: '0.0.0.0',
-    allowedHosts: 'all',
+    allowedHosts: ['147.5gao.ai', 'localhost', '.5gao.ai'],
     proxy: {
       '/api': {
         target: process.env.VITE_API_TARGET || 'http://backend:3001',
