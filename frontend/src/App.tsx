@@ -332,7 +332,7 @@ function App() {
   }, [activeLayer, baseLayer, cropTargetLayerId, layers]);
 
   const cropperImage = cropTargetLayer?.preview || baseImageForSegments || displayedImage || null;
-  const hasEditableImage = Boolean(image || editedImage);
+  const hasEditableImage = Boolean(image || editedImage || displayedImage);
 
   const handleToolSelect = useCallback(
     (toolId: string) => {
@@ -535,47 +535,13 @@ function App() {
     }
   };
 
-  const handleQuickEdit = async (action: QuickEditAction) => {
-    const baseSource = editedImage || image;
-    if (!baseSource) {
-      setError('Please upload an image first');
-      return;
-    }
-
-    if (!apiConfigured) {
-      setError('API key not configured. Please check backend configuration.');
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
+  const handleQuickEdit = (action: QuickEditAction) => {
+    // Just fill in the prompt, don't execute
     setPrompt(action.prompt);
-
-    try {
-      const blob = await dataUrlToBlob(baseSource);
-      const data = await editImage({
-        image: blob,
-        prompt: action.prompt.trim(),
-        negativePrompt: action.negativePrompt?.trim() || undefined,
-      });
-
-      const imageUrl = extractImageUrl(data);
-      if (imageUrl) {
-        setEditedImage(imageUrl);
-        registerLayer({
-          name: `Quick: ${action.label}`,
-          kind: 'ai',
-          preview: imageUrl,
-        });
-        setAiLayerCount((count) => count + 1);
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Quick edit failed';
-      setError(errorMessage);
-      console.error('Quick edit error:', err);
-    } finally {
-      setIsLoading(false);
+    if (action.negativePrompt) {
+      setNegativePrompt(action.negativePrompt);
     }
+    setError(null);
   };
 
   const handleMenuClick = (menuItem: string) => {
@@ -787,7 +753,7 @@ function App() {
               type="button"
               className="quick-action-icon-btn"
               onClick={() => handleQuickEdit(action)}
-              disabled={!hasEditableImage || isLoading}
+              disabled={isLoading || mode === 'weather'}
               title={action.description}
             >
               <action.icon size={16} />
@@ -821,18 +787,21 @@ function App() {
 
       <div className="workspace">
         <aside className="tool-panel">
-          {toolset.map((tool) => (
-            <button
-              key={tool.id}
-              className={`tool-btn ${activeTool === tool.id ? 'active' : ''}`}
-              onClick={() => handleToolSelect(tool.id)}
-              disabled={tool.id === 'crop' && !canCrop}
-              type="button"
-            >
-              <tool.icon size={18} />
-              <span>{tool.label}</span>
-            </button>
-          ))}
+          {toolset.map((tool) => {
+            const IconComponent = tool.icon;
+            return (
+              <button
+                key={tool.id}
+                className={`tool-btn ${activeTool === tool.id ? 'active' : ''}`}
+                onClick={() => handleToolSelect(tool.id)}
+                disabled={tool.id === 'crop' && !canCrop}
+                type="button"
+              >
+                <IconComponent size={18} />
+                <span>{tool.label}</span>
+              </button>
+            );
+          })}
         </aside>
 
         <section className="canvas-shell">
